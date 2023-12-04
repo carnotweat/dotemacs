@@ -2,7 +2,7 @@
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 (require 'init-utils)
 
-(defvar personal-directory "~/SynologyDrive/Sylvain/")
+(defvar personal-directory "~/clone/")
 (defvar projects-directory "~/clone/projects")
 
 ;; Add personal site-lisp to load-path
@@ -104,7 +104,9 @@
     (load "./elpaca-autoloads")))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
-
+(elpaca-queue
+ (elpaca keychain-environment
+   (keychain-refresh-environment)))
 ;; Install use-package support
 (elpaca elpaca-use-package
   ;; Enable :elpaca use-package keyword.
@@ -114,14 +116,110 @@
 
 ;; Block until current queue processed.
 (elpaca-wait)
+;; queue processed, new queue
+(defmacro use-feature (name &rest args)
+  "Like `use-package' but accounting for asynchronous installation.
+  NAME and ARGS are in `use-package'."
+  (declare (indent defun))
+  `(use-package ,name
+     :elpaca nil
+     ,@args))
+(defmacro use-feature (name &rest args)
+  "Like `use-package' but accounting for asynchronous installation.
+  NAME and ARGS are in `use-package'."
+  (declare (indent defun))
+  `(use-package ,name
+     :elpaca nil
+     ,@args))
+(when debug-on-error
+  (setq use-package-verbose t
+        use-package-expand-minimally nil
+        use-package-compute-statistics t
+        use-package-verbose nil
+        use-package-expand-minimally t)
+  (use-package benchmark-init
+    :ensure t
+    :config
+    (add-hook 'after-init-hook #'benchmark-init/deactivate))
+  (elpaca-wait))
+;; features
+(use-feature treesit
+             :init
+             (add-to-list 'auto-mode-alist '("\\.tsx?$" . typescript-ts-mode))
+             (add-to-list 'auto-mode-alist '("\\.jsx?$" . js-ts-mode)))
+;; packages
+(use-package treesit-auto
+  :after (treesit)
+  :config
+  (setq treesit-auto-install 'prompt)
+  (global-treesit-auto-mode))
 
+;; grammar
+(use-package typst-ts-mode
+  :elpaca (:type git :host sourcehut :repo "meow_king/typst-ts-mode")
+  :custom
+  (typst-ts-mode-watch-options "--open"))
+;;elpaca packages
 (use-package emacs
   :elpaca nil
   :custom
   (use-package-verbose nil)
   (use-package-hook-name-suffix "")
   (use-package-always-defer t))
-
+(use-package vterm
+  :elpaca (vterm :post-build
+                 (progn
+                   (setq vterm-always-compile-module t)
+                   (require 'vterm)
+                   (with-current-buffer (get-buffer-create vterm-install-buffer-name)
+                     (goto-char (point-min))
+                     (while (not (eobp))
+                       (message "%S"
+                                (buffer-substring (line-beginning-position)
+                                                  (line-end-position)))
+                       (forward-line)))
+                   (when-let ((so (expand-file-name "./vterm-module.so"))
+                              ((file-exists-p so)))
+                     (make-symbolic-link
+                      so (expand-file-name (file-name-nondirectory so)
+                                           "../../builds/vterm")
+                      'ok-if-already-exists))))
+  :commands (vterm vterm-other-window)
+  :custom
+  (vterm-max-scrollback 100000)
+  (vterm-buffer-name "vterm")
+  ;; :general
+  ;; ("M-o t" 'vterm)
+  ;; ("M-o T" 'vterm-other-window)
+  :config
+  (setq vterm-shell (executable-find "zsh")))
+(use-package eat
+  :elpaca (:type git
+		 :host codeberg
+		 :repo "akib/emacs-eat"
+		 :files ("*.el" ("term" "term/*.el") "*.texi"
+			 "*.ti" ("terminfo/e" "terminfo/e/*")
+			 ("terminfo/65" "terminfo/65/*")
+			 ("integration" "integration/*")
+			 (:exclude ".dir-locals.el" "*-tests.el")))
+  :commands (eat eat-eshell-mode)
+  :init
+  :config
+  (eat-compile-terminfo))
+(use-package combobulate
+  :elpaca (:host github :repo "mickeynp/combobulate")
+  :custom
+  (setq combobulate-key-prefix "C-c o")
+  :hook ((python-ts-mode . combobulate-mode)
+	 (js-ts-mode . combobulate-mode)
+	 (jsx-ts-mode . combobulate-mode)
+	 (typescript-ts-mode . combobulate-mode)
+	 (tsx-ts-mode . combobulate-mode)
+	 (css-ts-mode . combobulate-mode)
+         (yaml-ts-mode . combobulate-mode)
+	 ;; (html-ts-mode . combobulate-mode)
+         (json-ts-mode . combobulate-mode))
+  )
 ;; https://github.com/emacscollective/no-littering
 (use-package no-littering               ; help keeping ~/.emacs.d clean
   :demand
