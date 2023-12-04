@@ -3,10 +3,10 @@
 (require 'init-utils)
 
 (defvar personal-directory "~/SynologyDrive/Sylvain/")
-(defvar projects-directory "~/SynologyDrive/Sylvain/projects")
+(defvar projects-directory "~/clone/projects")
 
 ;; Add personal site-lisp to load-path
-(defvar personal-emacs-directory "~/SynologyDrive/Sylvain/emacs/")
+(defvar personal-emacs-directory "~/clone/emacs/")
 
 (defvar site-lisp-directory (expand-file-name "site-lisp" personal-emacs-directory ))
 
@@ -314,9 +314,6 @@
   :config
   (atomic-chrome-start-server))
 
-(use-package auth-source-org
-  :elpaca `(auth-source-org
-            :repo ,(expand-file-name "auth-source-org" projects-directory)))
 
 ;; https://github.com/abo-abo/avy
 (use-package avy                        ; tree-based completion
@@ -970,7 +967,7 @@ the vertical drag is done."
   :bind ("C-x C-t" . find-temp-file)
   :commands find-temp-file--filename
   :custom
-  (find-temp-file-directory "~/SynologyDrive/Sylvain/drafts")
+  (find-temp-file-directory "~/clone/drafts")
 
   ;; Path is: <mode name>/<date>/<prefix>-<sha1>.<ext>
   (find-temp-template-default "%M/%D/%N-%T.%E")
@@ -1387,10 +1384,10 @@ the vertical drag is done."
   :demand :after prescient
   :config (ivy-prescient-mode))
 
-;; https://github.com/minad/jinx
-(use-package jinx                       ; Enchanted Spell Checker
-  :hook (emacs-startup-hook . global-jinx-mode)
-  :bind ([remap ispell-word] . jinx-correct))
+
+;; (use-package jinx                       ; Enchanted Spell Checker
+;;   :hook (emacs-startup-hook . global-jinx-mode)
+;;   :bind ([remap ispell-word] . jinx-correct))
 
 ;; https://github.com/mooz/js2-mode/
 (use-package js2-mode                  ; Improved JavaScript editing mode
@@ -1699,7 +1696,7 @@ the vertical drag is done."
 ;; https://github.com/magnars/multiple-cursors.el
 (use-package multiple-cursors           ; Multiple cursors for Emacs.
   :custom
-  (mc/list-file "~/SynologyDrive/Sylvain/emacs/.mc-lists.el")
+  (mc/list-file "~/clone/emacs/.mc-lists.el")
   :config
   (add-to-list 'mc/unsupported-minor-modes 'electric-pair-mode)
   :bind (("C-M-c" . mc/mark-next-like-this)))
@@ -1761,20 +1758,20 @@ the vertical drag is done."
   (let ((capture-tmpls
          '(("e" "Event")
            ("ee" "Simple event" entry
-            (file+headline "~/SynologyDrive/Sylvain/Org/agenda.org" "Evénements simples")
+            (file+headline "~/clone/Org/agenda.org" "Evénements simples")
             "\
 * %?%(org-capture--add-link) %^G
   %^T
   OPENED: %U"
             :created t)
            ("es" "Scheduled event" entry
-            (file+headline "~/SynologyDrive/Sylvain/Org/agenda.org" "Liste des scheduled")
+            (file+headline "~/clone/Org/agenda.org" "Liste des scheduled")
             "\
 * %?%(org-capture--add-link) %^G
   SCHEDULED: %^T
   OPENED: %U")
            ("ed" "Deadline event" entry
-            (file+headline "~/SynologyDrive/Sylvain/Org/agenda.org" "Liste des deadlines")
+            (file+headline "~/clone/Org/agenda.org" "Liste des deadlines")
             "\
 * %?%(org-capture--add-link) %^G
   DEADLINE: %^T
@@ -1908,6 +1905,7 @@ the vertical drag is done."
 
 ;; https://github.com/org-roam/org-roam-bibtex
 (use-package org-roam-bibtex            ; Org Roam meets BibTeX
+  :load-path "~/clone/projects/org-roam-bibtex/" 
   :diminish
   :commands org-roam-bibtex-open-citekey
   :preface
@@ -2144,16 +2142,16 @@ the vertical drag is done."
   :config
   (defun project-reload-projects ()
     (interactive)
-    (dolist (dir '("~/SynologyDrive/Sylvain/enseignements/repositories/"
+    (dolist (dir '("~/clone/enseignements/repositories/"
                    "~/.emacs.d/straight/repos/"
                    "~/repositories"
-                   "~/SynologyDrive/Sylvain/recherche/programs/"
-                   "~/SynologyDrive/Sylvain/projects"))
+                   "~/clone/recherche/programs/"
+                   "~/clone/projects"))
       (when (file-directory-p dir)
         (project-remember-projects-under dir :recursive))))
 
   (defun project-try-known (dir)
-    (when (member dir (directory-files "~/SynologyDrive/Sylvain/enseignements/repositories/" 'full "^[^.]"))
+    (when (member dir (directory-files "~/clone/enseignements/repositories/" 'full "^[^.]"))
       (cons 'known dir)))
 
   (cl-defmethod project-root ((project (head known)))
@@ -2563,11 +2561,11 @@ behavior added."
 
   (state-define-state programming_samples
     :key "r"
-    :switch "~/SynologyDrive/Sylvain/Org/programming_samples.org")
+    :switch "~/clone/Org/programming_samples.org")
 
   (state-define-state personnal
     :key "p"
-    :switch "~/SynologyDrive/Sylvain/Org/personnel.org.gpg"
+    :switch "~/clone/Org/personnel.org.gpg"
     :keep (org-password-manager-get-pass))
 
   ;; Switch to init.el or any already open lisp/init-*.el files
@@ -2695,7 +2693,7 @@ behavior added."
   :defer 5
   :config
   ;; Be sure to leave my packages' repo on master
-  (push '("~/SynologyDrive/Sylvain/emacs/site-lisp/" (not-on-branch "master")) vc-check-alist)
+  (push '("~/clone/emacs/site-lisp/" (not-on-branch "master")) vc-check-alist)
 
   ;; Only look for unpushed commits on master
   (push '("~/.emacs.d" (unpushed "master") changes) vc-check-alist)
